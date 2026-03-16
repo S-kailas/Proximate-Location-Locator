@@ -1,0 +1,12 @@
+location-cluster-app
+│
+├── backend
+│   ├── main.py
+│   ├── database.py
+│   ├── models.py
+│   ├── excel_parser.py
+│   ├── clustering.py
+│   ├── map_parser.py
+│   └── requirements.txt
+│
+└── uploads

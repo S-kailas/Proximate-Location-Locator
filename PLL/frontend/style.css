@@ -1,0 +1,16 @@
+body{
+font-family:Arial;
+text-align:center;
+margin:0;
+}
+
+.upload-box{
+margin:20px;
+}
+
+#map{
+height:600px;
+width:90%;
+margin:auto;
+border:1px solid #ccc;
+}

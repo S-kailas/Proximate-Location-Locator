@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Location Cluster Analyzer</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h2>Location Clustering Tool</h2>
+
+<div class="upload-box">
+
+<input type="file" id="excelFile" accept=".xlsx">
+
+<button onclick="uploadFile()">Analyze</button>
+
+<button onclick="downloadExcel()">Download Result</button>
+
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
