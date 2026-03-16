@@ -19,7 +19,7 @@ app = FastAPI()
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://20.219.252.245:3000"],
+    allow_origins=["http://VPSip:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,7 +29,7 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 # Upload folder
-UPLOAD_FOLDER = "/home/kailas/Proximate-Location-Locator/PLL/uploads"
+UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
