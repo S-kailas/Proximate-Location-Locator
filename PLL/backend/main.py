@@ -1,3 +1,4 @@
+```python
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -11,6 +12,16 @@ from models import Base, Location
 from excel_parser import read_excel
 from map_parser import extract_coordinates
 from clustering import cluster_locations
+
+from osrm_service import get_distance_matrix, get_route_geometry
+from route_optimizer import nearest_neighbor
+
+
+# ================= CONFIG =================
+# Optional start/end points
+START_POINT = None   # example: (8.54, 76.90)
+END_POINT = None     # example: (8.55, 76.91)
+# =========================================
 
 
 # Create FastAPI app
@@ -62,37 +73,96 @@ async def upload_excel(file: UploadFile = File(...)):
             "lng": lng
         })
 
+    # ---------------- CLUSTERING ----------------
     labels = cluster_locations(coords)
 
-    db = SessionLocal()
-
-    results = []
+    clusters = {}
 
     for i, data in enumerate(parsed_data):
+        cid = int(labels[i])
+        clusters.setdefault(cid, []).append(data)
 
-        cluster_id = int(labels[i])
+    # ---------------- ROUTE OPTIMIZATION ----------------
+    final_clusters = []
 
-        loc = Location(
-            excel_id=data["excel_id"],
-            map_link=data["map_link"],
-            latitude=data["lat"],
-            longitude=data["lng"],
-            cluster_id=cluster_id
-        )
+    for cid, locations in clusters.items():
 
-        db.add(loc)
+        base_coords = [(loc["lat"], loc["lng"]) for loc in locations]
 
-        results.append({
-            "id": data["excel_id"],
-            "cluster": cluster_id,
-            "lat": data["lat"],
-            "lng": data["lng"]
+        working_coords = base_coords[:]
+
+        # Add optional start/end
+        if START_POINT:
+            working_coords.insert(0, START_POINT)
+
+        if END_POINT:
+            working_coords.append(END_POINT)
+
+        # OSRM distance matrix
+        matrix = get_distance_matrix(working_coords)
+
+        # Fallback if OSRM fails
+        if matrix is None:
+            order = list(range(len(working_coords)))
+        else:
+            order = nearest_neighbor(matrix, start_index=0)
+
+        # Ordered coords
+        ordered_coords = [working_coords[i] for i in order]
+
+        # Get real road geometry
+        geometry = get_route_geometry(ordered_coords)
+
+        # Map back to original points (exclude start/end)
+        points = []
+        order_counter = 1
+
+        for idx in order:
+
+            coord = working_coords[idx]
+
+            if coord == START_POINT or coord == END_POINT:
+                continue
+
+            for loc in locations:
+                if loc["lat"] == coord[0] and loc["lng"] == coord[1]:
+
+                    points.append({
+                        "id": loc["excel_id"],
+                        "lat": loc["lat"],
+                        "lng": loc["lng"],
+                        "order": order_counter
+                    })
+
+                    order_counter += 1
+                    break
+
+        final_clusters.append({
+            "cluster_id": cid,
+            "points": points,
+            "geometry": geometry
         })
+
+    # ---------------- SAVE TO DB (CLUSTER ONLY) ----------------
+    db = SessionLocal()
+
+    for cluster in final_clusters:
+        cid = cluster["cluster_id"]
+
+        for p in cluster["points"]:
+            loc = Location(
+                excel_id=p["id"],
+                map_link="",
+                latitude=p["lat"],
+                longitude=p["lng"],
+                cluster_id=cid
+            )
+            db.add(loc)
 
     db.commit()
     db.close()
 
-    return {"clusters": results}
+    return {"clusters": final_clusters}
 
 
 @app.get("/download")
@@ -107,7 +177,6 @@ def download_results():
     for r in rows:
         data.append({
             "excel_id": r.excel_id,
-            "map_link": r.map_link,
             "latitude": r.latitude,
             "longitude": r.longitude,
             "cluster": r.cluster_id
@@ -122,3 +191,4 @@ def download_results():
     db.close()
 
     return FileResponse(file_path, filename="cluster_result.xlsx")
+```
