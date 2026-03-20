@@ -1,5 +1,5 @@
-```python
 from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
@@ -27,7 +27,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://VPSip:3000"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,15 +35,21 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
-UPLOAD_FOLDER = "uploads"
+UPLOAD_FOLDER = "/uploads" #<---Update uploads path
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 @app.post("/upload")
 async def upload_excel(
-    file: UploadFile = File(...),
-    radius: float = Form(3)   # ← NEW (radius input)
+    request: Request,
+    file: UploadFile = File(...)
 ):
+    form = await request.form()
+
+    # FORCE READ radius manually
+    radius = float(form.get("radius", 3))
+
+    print("USING RADIUS:", radius)
 
     # -------- VALIDATION (important) --------
     if radius <= 0 or radius > 50:
@@ -76,7 +82,7 @@ async def upload_excel(
         })
 
     # ---------------- CLUSTERING ----------------
-    labels = cluster_locations(coords, eps_km=radius)   # ← UPDATED
+    labels = cluster_locations(coords, eps_km=radius) 
 
     clusters = {}
 
@@ -148,7 +154,7 @@ async def upload_excel(
         for p in cluster["points"]:
             loc = Location(
                 excel_id=p["id"],
-                map_link="",   # (you may improve later)
+                map_link="",   
                 latitude=p["lat"],
                 longitude=p["lng"],
                 cluster_id=cid
@@ -187,4 +193,3 @@ def download_results():
     db.close()
 
     return FileResponse(file_path, filename="cluster_result.xlsx")
-```
