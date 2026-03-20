@@ -2,12 +2,17 @@ location-cluster-app
 │
 ├── backend
 │   ├── main.py
-    ├──clustering.py
+|   ├──oserm_services.py
+|   ├──route_optimizer.py
 │   ├── database.py
 │   ├── models.py
 │   ├── excel_parser.py
 │   ├── clustering.py
 │   ├── map_parser.py
 │   └── requirements.txt
+├── frontend
+|   ├── app.js
+|   ├── index.html
+|   └── style.css
 │
 └── uploads
