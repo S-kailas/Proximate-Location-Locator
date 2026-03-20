@@ -75,7 +75,7 @@ Excel file must contain:
 
 ---
 
-## 🔧 Setup (VPS)
+## 🔧 Setup (VPS/LocalMachine)
 
 ### 1. Install dependencies
 
