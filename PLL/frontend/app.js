@@ -1,6 +1,5 @@
-
 // ================= CONFIG =================
-const BASE_URL = "http://VPSip:800"   // ← CHANGE if needed
+const BASE_URL = "http://VPSip:8000"   // ← FIXED PORT
 // =========================================
 
 
@@ -29,14 +28,18 @@ function clearMap() {
 async function uploadFile() {
 
     let fileInput = document.getElementById("excelFile")
+    let radiusInput = document.getElementById("radius")   // ← NEW
 
     if (!fileInput.files.length) {
         alert("Upload Excel File")
         return
     }
 
+    let radius = radiusInput ? radiusInput.value : 3
+
     let formData = new FormData()
     formData.append("file", fileInput.files[0])
+    formData.append("radius", radius)   // ← NEW
 
     try {
 
@@ -100,7 +103,6 @@ function displayClusters(clusters) {
         // ---------- ROUTE ----------
         if (cluster.geometry && cluster.geometry.length > 0) {
 
-            // Real OSRM route
             let polyline = L.polyline(cluster.geometry, {
                 color: color,
                 weight: 4
@@ -110,7 +112,6 @@ function displayClusters(clusters) {
 
         } else {
 
-            // Fallback (straight line)
             let fallback = cluster.points
                 .sort((a, b) => a.order - b.order)
                 .map(p => [p.lat, p.lng])
