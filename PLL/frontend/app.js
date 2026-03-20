@@ -1,5 +1,5 @@
 // ================= CONFIG =================
-const BASE_URL = "http://VPSip:8000"   // ← FIXED PORT
+const BASE_URL = "http://Localhost:8000"   // 
 // =========================================
 
 
@@ -27,29 +27,34 @@ function clearMap() {
 // Upload file
 async function uploadFile() {
 
-    let fileInput = document.getElementById("excelFile")
-    let radiusInput = document.getElementById("radius")   // ← NEW
+    const fileInput = document.getElementById("excelFile")
+    const radiusInput = document.getElementById("radius")
 
-    if (!fileInput.files.length) {
+    if (!fileInput || !fileInput.files.length) {
         alert("Upload Excel File")
         return
     }
 
-    let radiusInput = document.getElementById("radius")
-
+    // -------- SAFE RADIUS PARSE --------
     let radius = 3
-    if (radiusInput && radiusInput.value) {
-    radius = parseFloat(radiusInput.value)
+
+    if (radiusInput && radiusInput.value.trim() !== "") {
+        const parsed = parseFloat(radiusInput.value)
+        if (!isNaN(parsed)) {
+            radius = parsed
+        }
     }
 
-console.log("Sending radius:", radius)   // DEBUG
-    let formData = new FormData()
+    console.log("Sending radius:", radius)
+
+    // -------- FORM DATA --------
+    const formData = new FormData()
     formData.append("file", fileInput.files[0])
-    formData.append("radius", radius)   // ← NEW
+    formData.append("radius", radius.toString())   
 
     try {
 
-        let response = await fetch(`${BASE_URL}/upload`, {
+        const response = await fetch(`${BASE_URL}/upload`, {
             method: "POST",
             body: formData
         })
@@ -59,7 +64,7 @@ console.log("Sending radius:", radius)   // DEBUG
             return
         }
 
-        let data = await response.json()
+        const data = await response.json()
 
         if (!data.clusters) {
             alert("Invalid response from server")
@@ -80,20 +85,20 @@ function displayClusters(clusters) {
 
     clearMap()
 
-    let colors = ["red", "blue", "green", "orange", "purple", "black"]
+    const colors = ["red", "blue", "green", "orange", "purple", "black"]
 
     let allPoints = []
 
     clusters.forEach((cluster, index) => {
 
-        let color = colors[index % colors.length]
+        const color = colors[index % colors.length]
 
         // ---------- MARKERS ----------
         cluster.points.forEach(p => {
 
-            let latlng = [p.lat, p.lng]
+            const latlng = [p.lat, p.lng]
 
-            let marker = L.circleMarker(latlng, {
+            const marker = L.circleMarker(latlng, {
                 radius: 8,
                 color: color,
                 fillColor: color,
@@ -109,7 +114,7 @@ function displayClusters(clusters) {
         // ---------- ROUTE ----------
         if (cluster.geometry && cluster.geometry.length > 0) {
 
-            let polyline = L.polyline(cluster.geometry, {
+            const polyline = L.polyline(cluster.geometry, {
                 color: color,
                 weight: 4
             }).addTo(map)
@@ -118,11 +123,11 @@ function displayClusters(clusters) {
 
         } else {
 
-            let fallback = cluster.points
+            const fallback = cluster.points
                 .sort((a, b) => a.order - b.order)
                 .map(p => [p.lat, p.lng])
 
-            let polyline = L.polyline(fallback, {
+            const polyline = L.polyline(fallback, {
                 color: color,
                 dashArray: "5,5",
                 weight: 3
@@ -144,4 +149,3 @@ function displayClusters(clusters) {
 function downloadExcel() {
     window.open(`${BASE_URL}/download`)
 }
-
