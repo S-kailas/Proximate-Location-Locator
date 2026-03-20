@@ -2,7 +2,7 @@
 
 A web-based tool to cluster geographic locations and generate optimized travel routes using real road data (Travelling Salesman Problem).
 
-**Illustration:** https://youtu.be/giG7-zn7DPs?si=mjvFTqZkbYPYb0xG
+**Illustration:** https://youtu.be/giG7-zn7DPs?si=mjvFTqZkYPYb0x
 
 ---
 
